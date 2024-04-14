@@ -4,18 +4,27 @@ export const key = zod.string().min(12);
 
 export const ip = zod.string().ip();
 
-export const register = zod.object({ ip, key });
+export const deviceId = zod.number();
+
+export const create = zod.object({ ip, key });
 
 export const update = zod.object({
-  id: zod.number(),
-  key: key,
-  ip: ip,
+  deviceId,
+  key,
+  ip,
+});
+
+export const assign = zod.object({
+  deviceId,
+  userId: zod.number(),
 });
 
 const schema = {
   key,
+  deviceId,
   ip,
-  register,
+  assign,
+  create,
   update,
 };
 
