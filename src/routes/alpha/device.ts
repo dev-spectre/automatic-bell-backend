@@ -1,27 +1,34 @@
 import { Hono } from "hono";
 import schema from "../../zod/device";
-import { createDevice, getDevice, updateDeviceIp } from "../../db/device";
+import {
+  createDevice,
+  getDevice,
+  updateDeviceIp,
+  getDeviceById,
+  assignDevice,
+} from "../../db/device";
 
 const device = new Hono();
 
-device.get("/:key", async (ctx) => {
+device.get("/", async (ctx) => {
   const { req } = ctx;
-  const key = req.param("key");
+  const data = req.query("id");
 
-  const parsed = schema.key.safeParse(key);
+  const parsed = schema.deviceId.safeParse(data);
   if (!parsed.success) {
-    ctx.status(400);
-    ctx.json({
-      status: 400,
-      msg: "Invalid key",
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      msg: "Invalid id",
       err: parsed.error,
     });
   }
 
+  const id = parsed.data;
   try {
-    const deviceInfo = await getDevice(key, ctx);
+    const deviceInfo = await getDeviceById(id, ctx);
     return ctx.json({
-      status: 200,
+      status: StatusCode.Ok,
       msg: "Fetched device info",
       success: true,
       data: {
@@ -29,9 +36,45 @@ device.get("/:key", async (ctx) => {
       },
     });
   } catch (err) {
-    ctx.status(500);
+    ctx.status(StatusCode.InternalServerError);
     ctx.json({
-      status: 500,
+      status: StatusCode.InternalServerError,
+      success: false,
+      msg: "Couldn't fetch device info",
+      err: "Internal server error",
+    });
+  }
+});
+
+device.get("/:key", async (ctx) => {
+  const { req } = ctx;
+  const data = req.param("key");
+
+  const parsed = schema.key.safeParse(data);
+  if (!parsed.success) {
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      msg: "Invalid key",
+      err: parsed.error,
+    });
+  }
+
+  const key = parsed.data;
+  try {
+    const deviceInfo = await getDevice(key, ctx);
+    return ctx.json({
+      status: StatusCode.Ok,
+      msg: "Fetched device info",
+      success: true,
+      data: {
+        deviceInfo,
+      },
+    });
+  } catch (err) {
+    ctx.status(StatusCode.InternalServerError);
+    ctx.json({
+      status: StatusCode.InternalServerError,
       success: false,
       msg: "Couldn't fetch device info",
       err: "Internal server error",
@@ -44,20 +87,20 @@ device.post("/", async (ctx) => {
   try {
     var body = await req.json();
   } catch (err) {
-    ctx.status(400);
+    ctx.status(StatusCode.BadRequest);
     return ctx.json({
-      status: 400,
+      status: StatusCode.BadRequest,
       success: false,
       msg: "Failed while parsing request body",
       err: "Invalid JSON",
     });
   }
 
-  const parsed = schema.register.safeParse(body);
+  const parsed = schema.create.safeParse(body);
   if (!parsed.success) {
-    ctx.status(400);
+    ctx.status(StatusCode.BadRequest);
     return ctx.json({
-      status: 400,
+      status: StatusCode.BadRequest,
       success: false,
       msg: "Error in parsing request body",
       err: parsed.error,
@@ -66,19 +109,19 @@ device.post("/", async (ctx) => {
 
   const deviceInfo: Device = parsed.data;
   try {
-    const deviceId = await createDevice(deviceInfo, ctx);
-    ctx.status(201);
+    const { id } = await createDevice(deviceInfo, ctx);
+    ctx.status(StatusCode.Ok);
     return ctx.json({
-      status: 201,
+      status: StatusCode.Ok,
       success: true,
       msg: "Device created",
-      data: { deviceId },
+      data: { deviceId: id },
     });
   } catch (err) {
     console.error(err);
-    ctx.status(500);
+    ctx.status(StatusCode.InternalServerError);
     return ctx.json({
-      status: 500,
+      status: StatusCode.InternalServerError,
       success: false,
       msg: "Couldn't create device",
       err: "Internal server error",
@@ -100,10 +143,11 @@ device.put("/", async (ctx) => {
     });
   }
 
-  const {id, key, ip}: {id: number, key: string, ip: string} = parsed.data;
+  const { deviceId, key, ip }: { deviceId: number; key: string; ip: string } =
+    parsed.data;
 
   try {
-    const deviceInfo = await updateDeviceIp(id, key, ip, ctx);
+    const deviceInfo = await updateDeviceIp(deviceId, key, ip, ctx);
     return ctx.json({
       status: 200,
       msg: "Fetched device info",
@@ -119,6 +163,42 @@ device.put("/", async (ctx) => {
       success: false,
       msg: "Couldn't update device info",
       err: "Internal server error",
+    });
+  }
+});
+
+device.put("/assign", async (ctx) => {
+  const { req } = ctx;
+  const body = await req.json();
+
+  const parsed = schema.assign.safeParse(body);
+  if (!parsed.success) {
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      success: false,
+      msg: "Couldn't parse input",
+      err: "Invalid input format",
+    });
+  }
+
+  const { deviceId, userId } = parsed.data;
+  try {
+    const deviceInfo = await assignDevice(deviceId, userId, ctx);
+    ctx.status(StatusCode.Ok);
+    return ctx.json({
+      status: StatusCode.Ok,
+      msg: "Assigned device to user",
+      success: true,
+      data: { ...deviceInfo },
+    });
+  } catch (err) {
+    ctx.status(StatusCode.InternalServerError);
+    return ctx.json({
+      status: StatusCode.InternalServerError,
+      msg: "Couldn't assign device",
+      err: "Internal sever error",
+      success: false,
     });
   }
 });
