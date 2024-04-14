@@ -14,6 +14,24 @@ export async function createDevice(deviceInfo: Device, ctx: Context) {
   return deviceId;
 }
 
+export async function getDeviceById(id: number, ctx: Context) {
+  const prisma = createPrismaClienWithContext(ctx);
+
+  const device = await prisma.device.findUnique({
+    select: {
+      id: true,
+      userId: true,
+      key: true,
+      ip: true,
+    },
+    where: {
+      id,
+    },
+  });
+
+  return device;
+}
+
 export async function getDevice(key: string, ctx: Context) {
   const prisma = createPrismaClienWithContext(ctx);
 
@@ -39,11 +57,32 @@ export async function updateDeviceIp(
   const prisma = createPrismaClienWithContext(ctx);
 
   const device = await prisma.device.update({
-    where: { id },
+    where: { id, key },
     data: { ip },
     select: {
       id: true,
       ip: true,
+    },
+  });
+
+  return device;
+}
+
+export async function assignDevice(deviceId: number, userId: number, ctx: Context) {
+  const prisma = createPrismaClienWithContext(ctx);
+
+  const device = await prisma.device.update({
+    select: {
+      id: true,
+      key: true,
+      ip: true,
+      userId: true,
+    },
+    data: {
+      userId,
+    },
+    where: {
+      id: deviceId,
     },
   });
 
