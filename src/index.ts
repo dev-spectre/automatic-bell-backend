@@ -6,9 +6,9 @@ const app = new Hono();
 app.route("/api", api);
 
 app.all("*", (ctx) => {
-  ctx.status(404);
+  ctx.status(StatusCode.NotFound);
   return ctx.json({
-    status: 404,
+    status: StatusCode.NotFound,
     msg: "Unknown endpoint",
   });
 });

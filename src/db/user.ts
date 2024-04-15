@@ -35,3 +35,15 @@ export async function userDoesExists(username: string, ctx: Context) {
 
   return user;
 }
+
+export async function getUserWithPassword(username: string, ctx: Context) {
+  const prisma = createPrismaClienWithContext(ctx);
+
+  const user = await prisma.user.findUnique({
+    where: {
+      username,
+    },
+  });
+
+  return user;
+}
