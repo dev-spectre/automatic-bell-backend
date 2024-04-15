@@ -7,8 +7,28 @@ import {
   getDeviceById,
   assignDevice,
 } from "../../db/device";
+import { sign, verify } from "jsonwebtoken";
+import { env } from "hono/adapter";
 
 const device = new Hono();
+
+device.use(async (ctx, next) => {
+  const { req } = ctx;
+  const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
+  const jwt = req.header("Authorization")?.split(" ")?.at(1) ?? "";
+  try {
+    verify(jwt, JWT_KEY);
+    await next();
+  } catch {
+    ctx.status(StatusCode.Unauthorized);
+    return ctx.json({
+      status: StatusCode.Unauthorized,
+      success: false,
+      msg: "Couldn't verify user",
+      err: "Invalid JWT",
+    });
+  }
+});
 
 device.get("/", async (ctx) => {
   const { req } = ctx;
@@ -110,12 +130,17 @@ device.post("/", async (ctx) => {
   const deviceInfo: Device = parsed.data;
   try {
     const { id } = await createDevice(deviceInfo, ctx);
+    const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
+    const jwt = sign({ id }, JWT_KEY);
     ctx.status(StatusCode.Ok);
     return ctx.json({
       status: StatusCode.Ok,
       success: true,
       msg: "Device created",
-      data: { deviceId: id },
+      data: {
+        jwt,
+        deviceId: id,
+      },
     });
   } catch (err) {
     console.error(err);
