@@ -13,6 +13,24 @@ import { StatusCode, Device } from "../../types";
 
 const device = new Hono();
 
+device.use(async (ctx, next) => {
+  const { req } = ctx;
+  const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
+  const jwt = req.header("Authorization")?.split(" ")?.at(1) ?? "";
+  try {
+    await verify(jwt, JWT_KEY);
+    await next();
+  } catch {
+    ctx.status(StatusCode.Unauthorized);
+    return ctx.json({
+      status: StatusCode.Unauthorized,
+      success: false,
+      msg: "Couldn't verify user",
+      err: "Invalid JWT",
+    });
+  }
+});
+
 device.post("/", async (ctx) => {
   const { req } = ctx;
   try {
@@ -62,24 +80,6 @@ device.post("/", async (ctx) => {
       success: false,
       msg: "Couldn't create device",
       err: "Internal server error",
-    });
-  }
-});
-
-device.use(async (ctx, next) => {
-  const { req } = ctx;
-  const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
-  const jwt = req.header("Authorization")?.split(" ")?.at(1) ?? "";
-  try {
-    await verify(jwt, JWT_KEY);
-    await next();
-  } catch {
-    ctx.status(StatusCode.Unauthorized);
-    return ctx.json({
-      status: StatusCode.Unauthorized,
-      success: false,
-      msg: "Couldn't verify user",
-      err: "Invalid JWT",
     });
   }
 });

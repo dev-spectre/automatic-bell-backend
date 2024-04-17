@@ -22,7 +22,7 @@ export async function getDeviceById(id: number, ctx: Context) {
     select: {
       id: true,
       userId: true,
-      key: true,
+      key: false,
       ip: true,
     },
     where: {
@@ -75,7 +75,7 @@ export async function assignDevice(deviceId: number, userId: number, ctx: Contex
   const device = await prisma.device.update({
     select: {
       id: true,
-      key: true,
+      key: false,
       ip: true,
       userId: true,
     },
