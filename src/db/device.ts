@@ -1,5 +1,6 @@
 import { createPrismaClienWithContext } from ".";
 import { Context } from "hono";
+import { Device } from "../types";
 
 export async function createDevice(deviceInfo: Device, ctx: Context) {
   const prisma = createPrismaClienWithContext(ctx);

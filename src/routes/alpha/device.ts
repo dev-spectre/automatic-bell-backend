@@ -7,17 +7,71 @@ import {
   getDeviceById,
   assignDevice,
 } from "../../db/device";
-import { sign, verify } from "jsonwebtoken";
+import { sign, verify } from "hono/jwt";
 import { env } from "hono/adapter";
+import { StatusCode, Device } from "../../types";
 
 const device = new Hono();
+
+device.post("/", async (ctx) => {
+  const { req } = ctx;
+  try {
+    var body = await req.json();
+  } catch (err) {
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      success: false,
+      msg: "Failed while parsing request body",
+      err: "Invalid JSON",
+    });
+  }
+
+  const parsed = schema.create.safeParse(body);
+  if (!parsed.success) {
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      success: false,
+      msg: "Error in parsing request body",
+      err: parsed.error,
+    });
+  }
+
+  const deviceInfo: Device = parsed.data;
+  try {
+    const { id } = await createDevice(deviceInfo, ctx);
+    const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
+    const payload = { id };
+    const jwt = await sign(payload, JWT_KEY);
+    ctx.status(StatusCode.Ok);
+    return ctx.json({
+      status: StatusCode.Ok,
+      success: true,
+      msg: "Device created",
+      data: {
+        jwt,
+        deviceId: id,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    ctx.status(StatusCode.InternalServerError);
+    return ctx.json({
+      status: StatusCode.InternalServerError,
+      success: false,
+      msg: "Couldn't create device",
+      err: "Internal server error",
+    });
+  }
+});
 
 device.use(async (ctx, next) => {
   const { req } = ctx;
   const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
   const jwt = req.header("Authorization")?.split(" ")?.at(1) ?? "";
   try {
-    verify(jwt, JWT_KEY);
+    await verify(jwt, JWT_KEY);
     await next();
   } catch {
     ctx.status(StatusCode.Unauthorized);
@@ -97,58 +151,6 @@ device.get("/:key", async (ctx) => {
       status: StatusCode.InternalServerError,
       success: false,
       msg: "Couldn't fetch device info",
-      err: "Internal server error",
-    });
-  }
-});
-
-device.post("/", async (ctx) => {
-  const { req } = ctx;
-  try {
-    var body = await req.json();
-  } catch (err) {
-    ctx.status(StatusCode.BadRequest);
-    return ctx.json({
-      status: StatusCode.BadRequest,
-      success: false,
-      msg: "Failed while parsing request body",
-      err: "Invalid JSON",
-    });
-  }
-
-  const parsed = schema.create.safeParse(body);
-  if (!parsed.success) {
-    ctx.status(StatusCode.BadRequest);
-    return ctx.json({
-      status: StatusCode.BadRequest,
-      success: false,
-      msg: "Error in parsing request body",
-      err: parsed.error,
-    });
-  }
-
-  const deviceInfo: Device = parsed.data;
-  try {
-    const { id } = await createDevice(deviceInfo, ctx);
-    const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
-    const jwt = sign({ id }, JWT_KEY);
-    ctx.status(StatusCode.Ok);
-    return ctx.json({
-      status: StatusCode.Ok,
-      success: true,
-      msg: "Device created",
-      data: {
-        jwt,
-        deviceId: id,
-      },
-    });
-  } catch (err) {
-    console.error(err);
-    ctx.status(StatusCode.InternalServerError);
-    return ctx.json({
-      status: StatusCode.InternalServerError,
-      success: false,
-      msg: "Couldn't create device",
       err: "Internal server error",
     });
   }
