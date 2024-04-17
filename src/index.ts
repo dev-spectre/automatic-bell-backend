@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import api from "./routes";
+import { StatusCode } from "./types";
 
 const app = new Hono();
 

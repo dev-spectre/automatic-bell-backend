@@ -1,4 +1,5 @@
 import { Context } from "hono";
+import { User } from "../types";
 import { createPrismaClienWithContext } from ".";
 
 export async function createUser(data: User, ctx: Context) {

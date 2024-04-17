@@ -1,18 +1,18 @@
-interface Device {
+export interface Device {
   key: string;
   ip: string;
 }
 
-interface User {
+export interface User {
   username: string;
   password: string;
 }
 
-interface UserWithId extends User {
+export interface UserWithId extends User {
   id: number;
 }
 
-enum StatusCode {
+export enum StatusCode {
   Ok = 200,
   BadRequest = 400,
   Unauthorized = 401,

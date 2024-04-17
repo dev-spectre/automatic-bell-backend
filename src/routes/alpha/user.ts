@@ -3,7 +3,8 @@ import schema from "../../zod/user";
 import { createUser, userDoesExists, getUserWithPassword } from "../../db/user";
 import { hashPassword, verifyPassword } from "../../auth";
 import { env } from "hono/adapter";
-import { sign } from "jsonwebtoken";
+import { sign } from "hono/jwt";
+import { User, UserWithId, StatusCode } from "../../types"
 
 const user = new Hono();
 
@@ -107,7 +108,7 @@ user.post("/signin", async (ctx) => {
     username: user.username,
   };
   const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
-  const jwt = sign(payload, JWT_KEY);
+  const jwt = await sign(payload, JWT_KEY);
 
   ctx.status(StatusCode.Ok);
   ctx.json({
