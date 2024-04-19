@@ -5,7 +5,7 @@ import {
   getDevice,
   updateDeviceIp,
   getDeviceById,
-  assignDevice,
+  assignDeviceIfNotAssigned,
 } from "../../db/device";
 import { sign, verify } from "hono/jwt";
 import { env } from "hono/adapter";
@@ -211,7 +211,16 @@ device.put("/assign", async (ctx) => {
 
   const { deviceId, userId } = parsed.data;
   try {
-    const deviceInfo = await assignDevice(deviceId, userId, ctx);
+    const deviceInfo = await assignDeviceIfNotAssigned(deviceId, userId, ctx);
+    if (!deviceInfo) {
+      ctx.status(StatusCode.ResourceConflict);
+      return ctx.json({
+        status: StatusCode.ResourceConflict,
+        success: false,
+        msg: "Device already assigned",
+        err: "Resource conflict",
+      });
+    }
     ctx.status(StatusCode.Ok);
     return ctx.json({
       status: StatusCode.Ok,

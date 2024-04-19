@@ -69,8 +69,23 @@ export async function updateDeviceIp(
   return device;
 }
 
-export async function assignDevice(deviceId: number, userId: number, ctx: Context) {
+export async function assignDeviceIfNotAssigned(
+  deviceId: number,
+  userId: number,
+  ctx: Context,
+) {
   const prisma = createPrismaClienWithContext(ctx);
+
+  const info = await prisma.device.findUnique({
+    select: {
+      userId: true,
+    },
+    where: {
+      id: deviceId,
+    },
+  });
+
+  if (info?.userId) return null;
 
   const device = await prisma.device.update({
     select: {
