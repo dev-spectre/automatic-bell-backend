@@ -20,7 +20,8 @@ device.use(async (ctx, next) => {
   try {
     await verify(jwt, JWT_KEY);
     await next();
-  } catch {
+  } catch (err) {
+    console.error(err)
     ctx.status(StatusCode.Unauthorized);
     return ctx.json({
       status: StatusCode.Unauthorized,

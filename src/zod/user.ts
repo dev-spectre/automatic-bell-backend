@@ -11,10 +11,13 @@ export const user = zod.object({
   password,
 });
 
+export const userKeys = zod.array(zod.number());
+
 const schema = {
   user,
   username,
   password,
+  userKeys,
 };
 
 export default schema;

@@ -12,6 +12,12 @@ export interface UserWithId extends User {
   id: number;
 }
 
+export interface UserWithDeviceID extends UserWithId {
+  device: {
+    id: number;
+  }[]
+}
+
 export enum StatusCode {
   Ok = 200,
   BadRequest = 400,
