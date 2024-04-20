@@ -20,7 +20,7 @@ model Device {
   ip        String    @db.Inet
   createdAt DateTime  @default(now())
   updatedAt DateTime  @default(now()) @updatedAt
-  User      User?     @relation(fields: [userId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id])
   userId    Int?
   Userkey   Userkey[]
 }
@@ -31,7 +31,7 @@ model User {
   password  String    @db.VarChar()
   createdAt DateTime  @default(now())
   updatedAt DateTime  @default(now()) @updatedAt
-  Device    Device[]
+  device    Device[]
   Userkey   Userkey[]
 }
 
@@ -40,6 +40,6 @@ model Userkey {
   key      String
   User     User   @relation(fields: [userId], references: [id])
   userId   Int
-  Device   Device @relation(fields: [deviceId], references: [id])
+  device   Device @relation(fields: [deviceId], references: [id])
   deviceId Int
 }
