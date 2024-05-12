@@ -7,7 +7,7 @@ import {
   getDeviceById,
   assignDeviceIfNotAssigned,
 } from "../../db/device";
-import { sign, verify } from "hono/jwt";
+import { verify } from "hono/jwt";
 import { env } from "hono/adapter";
 import { StatusCode, Device } from "../../types";
 
@@ -60,16 +60,12 @@ device.post("/", async (ctx) => {
   const deviceInfo: Device = parsed.data;
   try {
     const { id } = await createDevice(deviceInfo, ctx);
-    const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
-    const payload = { id };
-    const jwt = await sign(payload, JWT_KEY);
     ctx.status(StatusCode.Ok);
     return ctx.json({
       status: StatusCode.Ok,
       success: true,
       msg: "Device created",
       data: {
-        jwt,
         deviceId: id,
       },
     });
@@ -185,6 +181,7 @@ device.put("/", async (ctx) => {
       },
     });
   } catch (err) {
+    console.error(err);
     ctx.status(500);
     ctx.json({
       status: 500,

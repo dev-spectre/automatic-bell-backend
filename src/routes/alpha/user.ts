@@ -31,7 +31,7 @@ user.post("/signup", async (ctx) => {
   }
 
   const data: User = parsed.data;
-  data.password = hashPassword(data.password);
+  data.password = hashPassword(data.password, ctx);
 
   try {
     const userExists = await userDoesExists(data.username, ctx);
@@ -102,7 +102,7 @@ user.post("/signin", async (ctx) => {
     });
   }
 
-  const passwordVerified = verifyPassword(data.password, user.password);
+  const passwordVerified = verifyPassword(data.password, user.password, ctx);
   if (!passwordVerified) {
     ctx.status(StatusCode.Unauthorized);
     return ctx.json({
