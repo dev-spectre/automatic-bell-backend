@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { getCookie, setCookie } from "hono/cookie";
 import schema from "../../zod/user";
 import {
   createUser,
@@ -79,15 +80,14 @@ user.post("/signin", async (ctx) => {
   const body = await req.json();
   const parsed = schema.user.safeParse(body);
   if (!parsed.success) {
-    ctx.status(400);
+    ctx.status(StatusCode.BadRequest);
     return ctx.json({
-      status: 400,
+      status: StatusCode.BadRequest,
       success: false,
       msg: "Invalid Input",
       err: parsed.error,
     });
   }
-
   const data: User = parsed.data;
   const user: UserWithDeviceID | null = await getUserWithDevice(
     data.username,
@@ -102,7 +102,6 @@ user.post("/signin", async (ctx) => {
       err: "User doesn't exists,",
     });
   }
-
   const passwordVerified = verifyPassword(data.password, user.password, ctx);
   if (!passwordVerified) {
     ctx.status(StatusCode.Unauthorized);
@@ -130,6 +129,12 @@ user.post("/signin", async (ctx) => {
         userKeyId.push(id);
       }
     }
+
+    setCookie(ctx, "auth", jwt, {
+      secure: true,
+      httpOnly: true,
+      sameSite: "Lax",
+    });
 
     ctx.status(StatusCode.Ok);
     return ctx.json({
@@ -189,9 +194,8 @@ user.put("/password/reset", async (ctx) => {
 });
 
 user.use(async (ctx, next) => {
-  const { req } = ctx;
   const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
-  const jwt = req.header("Authorization")?.split(" ")?.at(1) ?? "";
+  const jwt = getCookie(ctx, "auth") ?? "";
   try {
     await verify(jwt, JWT_KEY);
     await next();
