@@ -22,9 +22,9 @@ user.post("/signup", async (ctx) => {
   const body = await req.json();
   const parsed = schema.user.safeParse(body);
   if (!parsed.success) {
-    ctx.status(400);
+    ctx.status(StatusCode.BadRequest);
     return ctx.json({
-      status: 400,
+      status: StatusCode.BadRequest,
       success: false,
       msg: "Invalid Input",
       err: parsed.error,
@@ -37,17 +37,17 @@ user.post("/signup", async (ctx) => {
   try {
     const userExists = await userDoesExists(data.username, ctx);
     if (userExists) {
-      ctx.status(409);
+      ctx.status(StatusCode.BadRequest);
       return ctx.json({
-        status: 409,
+        status: StatusCode.BadRequest,
         msg: "User already exists",
         err: "Resource conflict",
       });
     }
   } catch (err) {
-    ctx.status(500);
+    ctx.status(StatusCode.InternalServerError);
     return ctx.json({
-      status: 500,
+      status: StatusCode.InternalServerError,
       msg: "Couldn't check if user exists",
       err: "Internal server error",
     });
@@ -55,17 +55,17 @@ user.post("/signup", async (ctx) => {
 
   try {
     const user = await createUser(data, ctx);
-    ctx.status(201);
+    ctx.status(StatusCode.Ok);
     return ctx.json({
-      status: 201,
+      status: StatusCode.Ok,
       success: true,
       msg: "User created",
       data: user,
     });
   } catch (err) {
-    ctx.status(500);
+    ctx.status(StatusCode.InternalServerError);
     return ctx.json({
-      status: 500,
+      status: StatusCode.InternalServerError,
       success: false,
       msg: "Couldn't create user",
       err: "Internal server error",
