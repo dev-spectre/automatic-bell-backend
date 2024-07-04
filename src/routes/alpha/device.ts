@@ -13,6 +13,87 @@ import { StatusCode, Device } from "../../types";
 
 const device = new Hono();
 
+device.get("/:key", async (ctx) => {
+  const { req } = ctx;
+  const data = req.param("key");
+
+  const parsed = schema.key.safeParse(data);
+  if (!parsed.success) {
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      msg: "Invalid key",
+      err: parsed.error,
+    });
+  }
+
+  const key = parsed.data;
+  try {
+    const deviceInfo = await getDevice(key, ctx);
+    return ctx.json({
+      status: StatusCode.Ok,
+      msg: "Fetched device info",
+      success: true,
+      data: {
+        deviceInfo,
+      },
+    });
+  } catch (err) {
+    ctx.status(StatusCode.InternalServerError);
+    ctx.json({
+      status: StatusCode.InternalServerError,
+      success: false,
+      msg: "Couldn't fetch device info",
+      err: "Internal server error",
+    });
+  }
+});
+
+device.put("/assign", async (ctx) => {
+  const { req } = ctx;
+  const body = await req.json();
+
+  const parsed = schema.assign.safeParse(body);
+  if (!parsed.success) {
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      success: false,
+      msg: "Couldn't parse input",
+      err: "Invalid input format",
+    });
+  }
+
+  const { deviceId, userId } = parsed.data;
+  try {
+    const deviceInfo = await assignDeviceIfNotAssigned(deviceId, userId, ctx);
+    if (!deviceInfo) {
+      ctx.status(StatusCode.ResourceConflict);
+      return ctx.json({
+        status: StatusCode.ResourceConflict,
+        success: false,
+        msg: "Device already assigned",
+        err: "Resource conflict",
+      });
+    }
+    ctx.status(StatusCode.Ok);
+    return ctx.json({
+      status: StatusCode.Ok,
+      msg: "Assigned device to user",
+      success: true,
+      data: { ...deviceInfo },
+    });
+  } catch (err) {
+    ctx.status(StatusCode.InternalServerError);
+    return ctx.json({
+      status: StatusCode.InternalServerError,
+      msg: "Couldn't assign device",
+      err: "Internal sever error",
+      success: false,
+    });
+  }
+});
+
 device.use(async (ctx, next) => {
   const { req } = ctx;
   const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
@@ -117,42 +198,6 @@ device.get("/", async (ctx) => {
   }
 });
 
-device.get("/:key", async (ctx) => {
-  const { req } = ctx;
-  const data = req.param("key");
-
-  const parsed = schema.key.safeParse(data);
-  if (!parsed.success) {
-    ctx.status(StatusCode.BadRequest);
-    return ctx.json({
-      status: StatusCode.BadRequest,
-      msg: "Invalid key",
-      err: parsed.error,
-    });
-  }
-
-  const key = parsed.data;
-  try {
-    const deviceInfo = await getDevice(key, ctx);
-    return ctx.json({
-      status: StatusCode.Ok,
-      msg: "Fetched device info",
-      success: true,
-      data: {
-        deviceInfo,
-      },
-    });
-  } catch (err) {
-    ctx.status(StatusCode.InternalServerError);
-    ctx.json({
-      status: StatusCode.InternalServerError,
-      success: false,
-      msg: "Couldn't fetch device info",
-      err: "Internal server error",
-    });
-  }
-});
-
 device.put("/", async (ctx) => {
   const { req } = ctx;
   const body = await req.json();
@@ -188,51 +233,6 @@ device.put("/", async (ctx) => {
       success: false,
       msg: "Couldn't update device info",
       err: "Internal server error",
-    });
-  }
-});
-
-device.put("/assign", async (ctx) => {
-  const { req } = ctx;
-  const body = await req.json();
-
-  const parsed = schema.assign.safeParse(body);
-  if (!parsed.success) {
-    ctx.status(StatusCode.BadRequest);
-    return ctx.json({
-      status: StatusCode.BadRequest,
-      success: false,
-      msg: "Couldn't parse input",
-      err: "Invalid input format",
-    });
-  }
-
-  const { deviceId, userId } = parsed.data;
-  try {
-    const deviceInfo = await assignDeviceIfNotAssigned(deviceId, userId, ctx);
-    if (!deviceInfo) {
-      ctx.status(StatusCode.ResourceConflict);
-      return ctx.json({
-        status: StatusCode.ResourceConflict,
-        success: false,
-        msg: "Device already assigned",
-        err: "Resource conflict",
-      });
-    }
-    ctx.status(StatusCode.Ok);
-    return ctx.json({
-      status: StatusCode.Ok,
-      msg: "Assigned device to user",
-      success: true,
-      data: { ...deviceInfo },
-    });
-  } catch (err) {
-    ctx.status(StatusCode.InternalServerError);
-    return ctx.json({
-      status: StatusCode.InternalServerError,
-      msg: "Couldn't assign device",
-      err: "Internal sever error",
-      success: false,
     });
   }
 });
