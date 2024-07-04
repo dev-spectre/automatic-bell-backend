@@ -2,10 +2,10 @@ import { Context } from "hono";
 import crypto from "node:crypto";
 
 export function hashPassword(password: string, ctx: Context, salt?: string): string {
-  const NOISE_LENGTH = ctx.env.NOISE_LENGTH;
-  const SALT_LENGTH = ctx.env.SALT_LENGTH;
-  const PBKDF2_ITERATION = ctx.env.PBKDF2_ITERATION;
-  const PBKDF2_LENGTH = ctx.env.PBKDF2_LENGTH;
+  const NOISE_LENGTH = Number(ctx.env.NOISE_LENGTH);
+  const SALT_LENGTH = Number(ctx.env.SALT_LENGTH);
+  const PBKDF2_ITERATION = Number(ctx.env.PBKDF2_ITERATION);
+  const PBKDF2_LENGTH = Number(ctx.env.PBKDF2_LENGTH);
   const DIGEST = ctx.env.DIGEST;
   if (salt && salt.length !== SALT_LENGTH) return "";
   const randomSalt: string = salt || crypto.randomBytes(NOISE_LENGTH).toString("base64");
