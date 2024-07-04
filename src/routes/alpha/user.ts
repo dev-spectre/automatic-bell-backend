@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { getCookie, setCookie } from "hono/cookie";
 import schema from "../../zod/user";
 import {
   createUser,
@@ -129,12 +128,6 @@ user.post("/signin", async (ctx) => {
       }
     }
 
-    setCookie(ctx, "auth", jwt, {
-      secure: true,
-      httpOnly: true,
-      sameSite: "Lax",
-    });
-
     ctx.status(StatusCode.Ok);
     return ctx.json({
       status: StatusCode.Ok,
@@ -157,8 +150,10 @@ user.post("/signin", async (ctx) => {
 });
 
 user.use(async (ctx, next) => {
+  const { req } = ctx;
+  const body = await req.json();
   const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
-  const jwt = getCookie(ctx, "auth") ?? "";
+  const jwt = body.get("Authorization") ?? "";
   try {
     await verify(jwt, JWT_KEY);
     await next();
