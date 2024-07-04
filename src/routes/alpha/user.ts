@@ -151,9 +151,8 @@ user.post("/signin", async (ctx) => {
 
 user.use(async (ctx, next) => {
   const { req } = ctx;
-  const body = await req.json();
   const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
-  const jwt = body.get("Authorization") ?? "";
+  const jwt = req.header("Authorization") ?? "";
   try {
     await verify(jwt, JWT_KEY);
     await next();
