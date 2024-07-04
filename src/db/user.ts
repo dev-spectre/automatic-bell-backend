@@ -109,33 +109,3 @@ export async function getUserKey(userKeyId: number[], ctx: Context) {
 
   return data?.key;
 }
-
-export async function resetUserPassword(
-  username: string,
-  password: string,
-  key: string,
-  ctx: Context,
-) {
-  const prisma = createPrismaClienWithContext(ctx);
-
-  const data = await prisma.user.update({
-    select: {
-      id: true,
-      username: true,
-      password: true,
-    },
-    data: {
-      password,
-    },
-    where: {
-      username,
-      device: {
-        some: {
-          key,
-        },
-      },
-    },
-  });
-
-  return data.password === password;
-}
