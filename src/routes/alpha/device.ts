@@ -49,51 +49,6 @@ device.get("/:key", async (ctx) => {
   }
 });
 
-device.put("/assign", async (ctx) => {
-  const { req } = ctx;
-  const body = await req.json();
-
-  const parsed = schema.assign.safeParse(body);
-  if (!parsed.success) {
-    ctx.status(StatusCode.BadRequest);
-    return ctx.json({
-      status: StatusCode.BadRequest,
-      success: false,
-      msg: "Couldn't parse input",
-      err: "Invalid input format",
-    });
-  }
-
-  const { deviceId, userId } = parsed.data;
-  try {
-    const deviceInfo = await assignDeviceIfNotAssigned(deviceId, userId, ctx);
-    if (!deviceInfo) {
-      ctx.status(StatusCode.ResourceConflict);
-      return ctx.json({
-        status: StatusCode.ResourceConflict,
-        success: false,
-        msg: "Device already assigned",
-        err: "Resource conflict",
-      });
-    }
-    ctx.status(StatusCode.Ok);
-    return ctx.json({
-      status: StatusCode.Ok,
-      msg: "Assigned device to user",
-      success: true,
-      data: { ...deviceInfo },
-    });
-  } catch (err) {
-    ctx.status(StatusCode.InternalServerError);
-    return ctx.json({
-      status: StatusCode.InternalServerError,
-      msg: "Couldn't assign device",
-      err: "Internal sever error",
-      success: false,
-    });
-  }
-});
-
 device.use(async (ctx, next) => {
   const { req } = ctx;
   const { JWT_KEY } = env<{ JWT_KEY: string }>(ctx);
@@ -233,6 +188,51 @@ device.put("/", async (ctx) => {
       success: false,
       msg: "Couldn't update device info",
       err: "Internal server error",
+    });
+  }
+});
+
+device.put("/assign", async (ctx) => {
+  const { req } = ctx;
+  const body = await req.json();
+
+  const parsed = schema.assign.safeParse(body);
+  if (!parsed.success) {
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      success: false,
+      msg: "Couldn't parse input",
+      err: "Invalid input format",
+    });
+  }
+
+  const { deviceId, userId } = parsed.data;
+  try {
+    const deviceInfo = await assignDeviceIfNotAssigned(deviceId, userId, ctx);
+    if (!deviceInfo) {
+      ctx.status(StatusCode.ResourceConflict);
+      return ctx.json({
+        status: StatusCode.ResourceConflict,
+        success: false,
+        msg: "Device already assigned",
+        err: "Resource conflict",
+      });
+    }
+    ctx.status(StatusCode.Ok);
+    return ctx.json({
+      status: StatusCode.Ok,
+      msg: "Assigned device to user",
+      success: true,
+      data: { ...deviceInfo },
+    });
+  } catch (err) {
+    ctx.status(StatusCode.InternalServerError);
+    return ctx.json({
+      status: StatusCode.InternalServerError,
+      msg: "Couldn't assign device",
+      err: "Internal sever error",
+      success: false,
     });
   }
 });
