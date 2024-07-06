@@ -1,9 +1,11 @@
 import { Hono } from "hono";
 import api from "./routes";
 import { StatusCode } from "./types";
+import { cors } from "hono/cors";
 
 const app = new Hono();
 
+app.use(cors());
 app.route("/api", api);
 
 app.onError((err, ctx) => {
