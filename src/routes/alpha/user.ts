@@ -6,6 +6,7 @@ import {
   getUserWithDevice,
   storeUserKey,
   deleteUserKey,
+  resetUserPassword,
   getUserKey,
 } from "../../db/user";
 import { hashPassword, verifyPassword } from "../../auth";
@@ -164,6 +165,42 @@ user.post("/signup", async (ctx) => {
       success: false,
       msg: "Couldn't create user",
       err: "Internal server error",
+    });
+  }
+});
+
+user.put("/password/reset", async (ctx) => {
+  const { req } = ctx;
+
+  const body = await req.json();
+  const parsedResult = schema.resetPassword.safeParse(body);
+  if (!parsedResult.success) {
+    ctx.status(StatusCode.BadRequest);
+    return ctx.json({
+      status: StatusCode.BadRequest,
+      success: false,
+      err: parsedResult.error,
+      msg: "Invalid input",
+    });
+  }
+
+  const { username, password, key } = parsedResult.data;
+  const hashedPassword = hashPassword(password, ctx);
+  try {
+    await resetUserPassword(username, hashedPassword, key, ctx);
+    ctx.status(StatusCode.Ok);
+    return ctx.json({
+      status: StatusCode.Ok,
+      success: true,
+      msg: "Updated user password",
+    });
+  } catch (err) {
+    ctx.status(StatusCode.InternalServerError);
+    return ctx.json({
+      status: StatusCode.InternalServerError,
+      success: false,
+      err: "Internal server error",
+      msg: "Couldn't update password",
     });
   }
 });
