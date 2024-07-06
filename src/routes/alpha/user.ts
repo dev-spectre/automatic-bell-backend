@@ -14,6 +14,8 @@ import { env } from "hono/adapter";
 import { sign, verify } from "hono/jwt";
 import { User, StatusCode, UserWithDeviceID } from "../../types";
 
+const TOKEN_LIFTIME = 100 * 24 * 60 * 60;
+
 const user = new Hono();
 
 user.post("/signin", async (ctx) => {
@@ -56,6 +58,8 @@ user.post("/signin", async (ctx) => {
   }
 
   const payload = {
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + TOKEN_LIFTIME,
     deviceId: user.device,
     userId: user.id,
     username: user.username,
