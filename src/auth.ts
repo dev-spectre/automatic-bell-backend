@@ -15,7 +15,7 @@ export function hashPassword(password: string, ctx: Context, salt?: string): str
   return `${secondHalfOfSalt}${hashPassword}${firstHalfOfSalt}`;
 }
 
-export async function verifyPassword(password: string, hashedPassword: string, ctx: Context): Promise<boolean> {
+export function verifyPassword(password: string, hashedPassword: string, ctx: Context): boolean {
   const SALT_LENGTH = ctx.env.SALT_LENGTH;
   const hashedPasswordLength = hashedPassword.length - SALT_LENGTH;
   const salt = `${hashedPassword.slice(hashedPasswordLength + SALT_LENGTH / 2, hashedPassword.length)}${hashedPassword.slice(0, SALT_LENGTH / 2)}`;
