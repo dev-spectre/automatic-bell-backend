@@ -119,7 +119,7 @@ device.post("/", async (ctx) => {
 
 device.get("/", async (ctx) => {
   const { req } = ctx;
-  const data = req.query("id");
+  const data = parseInt(req.query("id") ?? "-1");
 
   const parsed = schema.deviceId.safeParse(data);
   if (!parsed.success) {
