@@ -145,6 +145,7 @@ user.post("/signup", async (ctx) => {
       });
     }
   } catch (err) {
+    console.error(err);
     ctx.status(StatusCode.InternalServerError);
     return ctx.json({
       status: StatusCode.InternalServerError,
@@ -163,6 +164,7 @@ user.post("/signup", async (ctx) => {
       data: user,
     });
   } catch (err) {
+    console.error(err);
     ctx.status(StatusCode.InternalServerError);
     return ctx.json({
       status: StatusCode.InternalServerError,
@@ -199,6 +201,7 @@ user.put("/password/reset", async (ctx) => {
       msg: "Updated user password",
     });
   } catch (err) {
+    console.error(err);
     ctx.status(StatusCode.InternalServerError);
     return ctx.json({
       status: StatusCode.InternalServerError,

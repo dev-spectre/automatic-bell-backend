@@ -9,6 +9,7 @@ app.use(cors());
 app.route("/api", api);
 
 app.onError((err, ctx) => {
+  console.error(err);
   ctx.status(StatusCode.InternalServerError);
   return ctx.json({
     status: StatusCode.InternalServerError,

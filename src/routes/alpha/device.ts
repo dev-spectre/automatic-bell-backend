@@ -39,6 +39,7 @@ device.get("/:key", async (ctx) => {
       },
     });
   } catch (err) {
+    console.error(err);
     ctx.status(StatusCode.InternalServerError);
     ctx.json({
       status: StatusCode.InternalServerError,
@@ -73,6 +74,7 @@ device.post("/", async (ctx) => {
   try {
     var body = await req.json();
   } catch (err) {
+    console.error(err)
     ctx.status(StatusCode.BadRequest);
     return ctx.json({
       status: StatusCode.BadRequest,
@@ -143,6 +145,7 @@ device.get("/", async (ctx) => {
       },
     });
   } catch (err) {
+    console.error(err);
     ctx.status(StatusCode.InternalServerError);
     ctx.json({
       status: StatusCode.InternalServerError,
@@ -227,6 +230,7 @@ device.put("/assign", async (ctx) => {
       data: { ...deviceInfo },
     });
   } catch (err) {
+    console.error(err);
     ctx.status(StatusCode.InternalServerError);
     return ctx.json({
       status: StatusCode.InternalServerError,
