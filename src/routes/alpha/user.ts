@@ -11,7 +11,7 @@ import {
 } from "../../db/user";
 import { hashPassword, verifyPassword } from "../../auth";
 import { env } from "hono/adapter";
-import { sign, verify } from "hono/jwt";
+import { sign, verify, decode } from "hono/jwt";
 import { User, StatusCode, UserWithDeviceID } from "../../types";
 
 const TOKEN_LIFTIME = 100 * 24 * 60 * 60;
@@ -104,6 +104,29 @@ user.use(async (ctx, next) => {
   try {
     await verify(jwt, JWT_KEY);
     await next();
+  } catch (err) {
+    console.error(err);
+    ctx.status(StatusCode.Unauthorized);
+    return ctx.json({
+      status: StatusCode.Unauthorized,
+      success: false,
+      msg: "Couldn't verify user",
+      err: "Invalid JWT",
+    });
+  }
+});
+
+user.get("/verify", async (ctx) => {
+  const { req } = ctx;
+  const jwt = req.header("Authorization")?.split(" ").at(1) ?? "";
+  try {
+    const data = await decode(jwt);
+    if (!Object.hasOwn(data.payload, "username"))
+    ctx.status(StatusCode.Ok);
+    return ctx.json({
+      status: StatusCode.Ok,
+      success: true,
+    });
   } catch (err) {
     console.error(err);
     ctx.status(StatusCode.Unauthorized);
