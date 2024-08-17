@@ -11,6 +11,11 @@ export const user = zod.object({
   password,
 });
 
+export const userSignIn = zod.object({
+  username,
+  password: zod.string(),
+});
+
 export const resetPassword = zod.object({
   username,
   password,
@@ -21,6 +26,7 @@ export const userKeys = zod.array(zod.number());
 
 const schema = {
   user,
+  userSignIn,
   resetPassword,
   username,
   password,

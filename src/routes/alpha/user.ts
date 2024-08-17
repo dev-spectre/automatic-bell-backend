@@ -22,7 +22,7 @@ user.post("/signin", async (ctx) => {
   const { req } = ctx;
 
   const body = await req.json();
-  const parsed = schema.user.safeParse(body);
+  const parsed = schema.userSignIn.safeParse(body);
   if (!parsed.success) {
     ctx.status(StatusCode.BadRequest);
     return ctx.json({
@@ -121,8 +121,7 @@ user.get("/verify", async (ctx) => {
   const jwt = req.header("Authorization")?.split(" ").at(1) ?? "";
   try {
     const data = await decode(jwt);
-    if (!Object.hasOwn(data.payload, "username"))
-    ctx.status(StatusCode.Ok);
+    if (!Object.hasOwn(data.payload, "username")) ctx.status(StatusCode.Ok);
     return ctx.json({
       status: StatusCode.Ok,
       success: true,
@@ -160,9 +159,9 @@ user.post("/signup", async (ctx) => {
   try {
     const userExists = await userDoesExists(data.username, ctx);
     if (userExists) {
-      ctx.status(StatusCode.BadRequest);
+      ctx.status(StatusCode.ResourceConflict);
       return ctx.json({
-        status: StatusCode.BadRequest,
+        status: StatusCode.ResourceConflict,
         msg: "User already exists",
         err: "Resource conflict",
       });
